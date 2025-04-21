@@ -1,0 +1,54 @@
+{% extends "tracker/layout.html" %}
+{% load static %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h2 class="mb-3">{{ habit.name }}</h2>
+
+        <p>
+            <strong>Today's status: </strong>
+            {% if today_done %}
+                <span class="text-success">✅ Done</span>
+            {% else %}
+                <span class="text-danger">❌ Not done</span>
+            {% endif %}
+        </p>
+
+        <form method="post" class="mb-4">
+            {% csrf_token%}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Save today's entry</button>
+        </form>
+
+        <div class="mb-4">
+            <div class="alert alert-info">
+                <strong>Current Streak: </strong>{{ streak.current_streak }} days
+            </div>
+            <div class="alert alert-success">
+                <strong>Longest Streak: </strong>{{ streak.longest_streak }} days!
+            </div>
+            <div class="alert alert-warning">
+                <strong>Completion: </strong><span id="completion">{{ streak.completion_percent }}</span>%
+                <div class="progress mt-1">
+                    <div class="progress-bar bg-success" role="progressbar"
+                    style="width: {{ streak.completion_percent }}%;"
+                    aria-valuenow="{{ streak.completion_percent}}" aria-valuemin="0" aria-valuemax="100">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="mb-2">History</h3>
+        <ul class="list-group">
+            {% for log in logs %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ log.date }}:
+                    <span>{{ log.note }}</span>
+                </li>
+            {% empty %}
+                <li class="list-group-item text-muted">No entries yet.</li>
+            {% endfor %}
+        </ul>
+
+    </div>
+{% endblock %}

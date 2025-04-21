@@ -1,0 +1,26 @@
+{% extends "tracker/layout.html" %}
+
+{% block body %}
+
+    <h2>Your Habits</h2>
+    <a href="{% url 'create_habit' %}">Create Habit</a>
+    <ul>
+        {% for habit in habits %}
+            <li>
+                <a href="{% url 'habit_detail' habit.id %}">{{ habit.name }}</a>
+                <br>
+                Current Streak: {{ current_streak }}
+                <br>
+                Longest Streak: {{ longest_streak }}
+                <br>
+                Today's Progress:
+                {% if today_done %}
+                    ✅
+                {% else %}
+                    ❌
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+
+{% endblock %}
