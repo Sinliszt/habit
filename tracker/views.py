@@ -26,7 +26,7 @@ def index(request):
         today_done = logs.filter(date=date.today()).exists()
 
         streak_data = calculate_streaks(
-            log_dates = logs.values.list("date", flat=True),
+            log_dates = logs.values_list("date", flat=True),
             start_date = habit.created_at,
         )
 

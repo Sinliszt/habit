@@ -16,6 +16,7 @@ class HabitForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
+        self.fields["users"].required = False
         self.fields["users"].queryset = user.friends.all()
         self.fields["users"].initial = [user]
 

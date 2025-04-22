@@ -20,7 +20,7 @@ def calculate_streaks(log_dates, start_date):
     
     longest_streak = max(longest_streak, streak)
     total_days = (today-start_date).days + 1
-    completion_percent = round((len(log_dates) / total_days * 100,1 ) if total_days > 0 else 0.0)
+    completion_percent = round((len(log_dates) / total_days) * 100, 1) if total_days > 0 else 0.0
 
     return {
         "current_streak": current_streak,

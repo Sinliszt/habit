@@ -43,11 +43,11 @@
         <form method="get" class="mb-3">
             <label for="user">View logs from:</label>
             <select name="user" id="user" onchange="this.form.submit()" class="form-select w-auto d-inline-block ms-2">
-                <option value="{{ request.user.id }}" {% if selected_user.id =request.user.id %}selected{% endif %}>
+                <option value="{{ request.user.id }}" {% if selected_user.id == request.user.id %}selected{% endif %}>
                     You ({{ request.user.username }})
                 </option>
                 {% for user in shared_users %}
-                    <option value="{{ user.id }}" {% if selected_user.id=user.id %}selected{% endif %}>
+                    <option value="{{ user.id }}" {% if selected_user.id == user.id %}selected{% endif %}>
                         {{ user.username }}
                     </option>
                 {% endfor %}

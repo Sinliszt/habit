@@ -2,29 +2,59 @@
 
 {% block body %}
 
-    <h2>My Friends</h2>
-    <a href="{% url 'search_users' %}">
-        <button class="btn btn-primary">Add Friends</button>
-    </a>
+    <div class="container mt-4">
+        <h2 class="text-center mb-4">My Friends</h2>
 
-    <ul>
-        {% for friend in friends %}
-            <li>{{ friend.username }}</li>
-        {% endfor %}
-    </ul>
+        <div class="text-center mb-4">
+            <a href="{% url 'search_users' %}">
+                <button class="btn btn-success">Add Friends</button>
+            </a>
+        </div>
 
+        {% if friends %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h4 class="card-title">Your Friends</h4>
+                    <ul class="list-group">
+                        {% for friend in friends%}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ friend.username }}
+                                <button class="btn btn-outline-secondary btn-sm">View Profile</button>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                You have no friends yet.
+            </div>
+        {% endif %}
 
-    <h3>Incoming Requests</h3>
+        <h3 class="mt-4 mb-4">Incoming Requests</h3>
 
-    <ul>
-        {% for req in incoming_requests %}
-            <li>{{ req.from_user.username }}
-                <form action="{% url 'accept_friend_request' req.id %}" method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-primary">Accept</button>
-                </form>
-            </li>
-        {% endfor %}
-    </ul>
+        {% if incoming_requests%}
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for req in incoming_requests %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ req.from_user.username }}
+                                <form action="{% url 'accept_friend_request' req.id %}" method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary btn-sm">Accept</button>
+                                </form>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
 
+        {% else %}
+            <div class="alert alert-info">
+                You have no incoming friend requests
+            </div>
+        {% endif %}
+    </div>
+    
 {% endblock %}
