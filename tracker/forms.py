@@ -8,6 +8,9 @@ class HabitForm(forms.ModelForm):
     class Meta:
         model = Habit
         fields = ['name', 'category', 'users']
-        widgets = {
-            "users": forms.CheckboxSelectMultiple
-        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user")
+        super().__init__(*args, **kwargs)
+        self.fields["users"].queryset = user.friends.all()
+        self.fields["users"].initial = [user]

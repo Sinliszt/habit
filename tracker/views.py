@@ -1,16 +1,19 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from datetime import date, timedelta
 from django.http import HttpResponseRedirect
 from django.db import IntegrityError
+from django.db.models import Q
 from django.utils.timezone import now
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 
 from .models import User, Habit, HabitLog, FriendRequest
 from .forms import HabitForm, HabitLogForm
+
+User = get_user_model()
 
 @login_required
 def index(request):
@@ -141,7 +144,7 @@ def signup(request):
 @login_required
 def create_habit(request):
     if request.method == "POST":
-        form = HabitForm(request.POST)
+        form = HabitForm(request.POST, user=request.user)
         if form.is_valid():
             habit=form.save(commit=False)
             habit.save()
@@ -149,7 +152,7 @@ def create_habit(request):
             habit.users.add(request.user)
             return redirect('index')
     else:
-        form = HabitForm()
+        form = HabitForm(user=request.user)
 
     return render(request, "tracker/create_habit.html", {
         "form": form
@@ -220,10 +223,10 @@ def get_streaks_and_progress(user, habit):
 def send_friend_request(request, user_id):
     to_user = get_object_or_404(User, id=user_id)
     FriendRequest.objects.get_or_create(from_user=request.user, to_user=to_user)
-    return redirect("friends_list")
+    return redirect("search_users")
 
 @login_required
-def accept_request(request, request_id):
+def accept_friend_request(request, request_id):
     friends = request.user.friends.all()
     incoming = FriendRequest.objects.filter(to_user=request.user)
     outgoing = FriendRequest.objects.filter(from_user=request.user)
@@ -232,4 +235,25 @@ def accept_request(request, request_id):
         "friends": friends,
         "incoming": incoming,
         "outgoing": outgoing,
+    })
+
+@login_required
+def search_users(request):
+    query = request.GET.get("q")
+    users=[]
+    if query:
+        users = User.objects.filter(
+            Q(username__icontains=query) | Q(email__icontains=query)
+        ).exclude(id=request.user.id)
+
+    return render(request, "tracker/friend_search.html", {
+        "users": users,
+        "query": query,
+    })
+
+@login_required
+def friends_list(request):
+    friends = request.user.friends.all()
+    return render(request, "tracker/friends_list.html", {
+        "friends": friends,
     })

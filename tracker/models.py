@@ -3,7 +3,8 @@ from django.contrib.auth.models import AbstractUser
 from django.utils.timezone import now
 
 class User(AbstractUser):
-    friends = models.ManyToManyField("self", symmetrical=True, blank=True, related_name="friends_with")
+    friends = models.ManyToManyField("self", symmetrical=True, blank=True)
+    
 class Category(models.Model):
     name = models.CharField(max_length=32, unique=True)
 

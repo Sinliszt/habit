@@ -17,7 +17,7 @@
             <li>{{ req.from_user.username }}
                 <form action="{% url 'accept_friend_request' req.id %}" method="post">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-primary"></button>
+                    <button type="submit" class="btn btn-primary">Accept</button>
                 </form>
             </li>
         {% endfor %}
