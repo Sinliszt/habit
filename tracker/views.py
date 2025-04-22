@@ -54,7 +54,7 @@ def index(request):
 
 @login_required
 def habit_detail(request, habit_id):
-    habit = get_object_or_404(Habit, id=habit_id, user=request.user)
+    habit = get_object_or_404(Habit, id=habit_id, users=request.user)
     logs = habit.logs.order_by('-date')
     today_done = logs.filter(user=request.user, date=date.today()).exists()
     streak_data = get_streaks_and_progress(request.user, habit)
@@ -183,7 +183,7 @@ def log_shared_habit(request):
         )
 
 def get_streaks_and_progress(user, habit):
-    logs = HabitLog.objects.filter(user=user, habit=habit).order_bu("-date")
+    logs = HabitLog.objects.filter(user=user, habit=habit).order_by("-date")
     today = date.today()
     current_streak = 0
     longest_streak = 0
@@ -192,11 +192,11 @@ def get_streaks_and_progress(user, habit):
     
     all_dates = set(log.date for log in logs)
 
-    for i in range(100):
+    for i in range((today - habit.created_at).days + 1):
         t = today - timedelta(days=i)
         if t in all_dates:
             streak +=1
-            if i ==0:
+            if i == 0:
                 current_streak = streak
             else:
                 if i == 0:
@@ -207,7 +207,7 @@ def get_streaks_and_progress(user, habit):
             
             longest_streak = max(longest_streak, streak)
             total_days = (today-habit.created_at).days + 1
-            completion_percent = round((leng(all_dates) / total_days)*100,1)
+            completion_percent = round((len(all_dates) / total_days)*100,1)
 
             return {
                 "current_streak": current_streak,

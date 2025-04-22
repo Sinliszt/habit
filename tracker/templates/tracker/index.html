@@ -5,16 +5,18 @@
     <h2>Your Habits</h2>
     <a href="{% url 'create_habit' %}">Create Habit</a>
     <ul>
-        {% for habit in habits %}
+        {% for item in habit_data %}
             <li>
-                <a href="{% url 'habit_detail' habit.id %}">{{ habit.name }}</a>
+                <h3>
+                    <a href="{% url 'habit_detail' item.habit.id %}">{{ item.habit.name }}</a>
+                </h3>
                 <br>
-                Current Streak: {{ current_streak }}
+                Current Streak: {{ item.current_streak }}
                 <br>
-                Longest Streak: {{ longest_streak }}
+                Longest Streak: {{ item.longest_streak }}
                 <br>
                 Today's Progress:
-                {% if today_done %}
+                {% if item.today_done %}
                     ✅
                 {% else %}
                     ❌
