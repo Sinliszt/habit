@@ -1,28 +1,33 @@
 {% extends "tracker/layout.html" %}
 
 {% block body %}
-
     <h2>Your Habits</h2>
-    <a href="{% url 'create_habit' %}">Create Habit</a>
-    <ul>
+    <button class="btn btn-success">
+        <a href="{% url 'create_habit' %}" style="color: white;">Create Habit</a>
+    </button>
+    <hr>
+    
+    <div class="habits">
         {% for item in habit_data %}
-            <li>
-                <h3>
-                    <a href="{% url 'habit_detail' item.habit.id %}">{{ item.habit.name }}</a>
-                </h3>
-                <br>
-                Current Streak: {{ item.current_streak }}
-                <br>
-                Longest Streak: {{ item.longest_streak }}
-                <br>
-                Today's Progress:
-                {% if item.today_done %}
-                    ✅
-                {% else %}
-                    ❌
-                {% endif %}
-            </li>
+            <div class="post card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <a href="{% url 'habit_detail' item.habit.id %}">{{ item.habit.name }}</a>
+                    </h5>
+                    <strong>Current Streak: </strong>{{ item.current_streak }}
+                    <br>
+                    <strong>Longest Streak: </strong>{{ item.longest_streak }}
+                    <br>
+                    <strong>
+                        Today's Progress: 
+                    </strong>
+                    {% if item.today_done %}
+                        ✅
+                    {% else %}
+                        ❌
+                    {% endif %}
+                </div>
+            </div>
         {% endfor %}
-    </ul>
-
+    </div>
 {% endblock %}

@@ -1,7 +1,9 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser
 from django.utils.timezone import now
 
+class User(AbstractUser):
+    friends = models.ManyToManyField("self", symmetrical=True, blank=True, related_name="friends_with")
 class Category(models.Model):
     name = models.CharField(max_length=32, unique=True)
 
@@ -30,3 +32,16 @@ class HabitLog(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.habit.name} on {self.date}"
+
+class FriendRequest(models.Model):
+    from_user = models.ForeignKey(User, related_name="friend_requests_sent", on_delete=models.CASCADE)
+    to_user = models.ForeignKey(User, related_name="friend_requests_received", on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def accept(self):
+        self.to_user.friends.add(self.from_user)
+        self.from_user.friends.add(self.to_user)
+        self.delete()
+
+    def decline(self):
+        self.delete()

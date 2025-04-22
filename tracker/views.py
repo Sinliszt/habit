@@ -9,7 +9,7 @@ from django.utils.timezone import now
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 
-from .models import User, Habit, HabitLog
+from .models import User, Habit, HabitLog, FriendRequest
 from .forms import HabitForm, HabitLogForm
 
 @login_required
@@ -214,3 +214,22 @@ def get_streaks_and_progress(user, habit):
                 "longest_streak": longest_streak,
                 "completion_percent": completion_percent,
             }
+
+
+@login_required
+def send_friend_request(request, user_id):
+    to_user = get_object_or_404(User, id=user_id)
+    FriendRequest.objects.get_or_create(from_user=request.user, to_user=to_user)
+    return redirect("friends_list")
+
+@login_required
+def accept_request(request, request_id):
+    friends = request.user.friends.all()
+    incoming = FriendRequest.objects.filter(to_user=request.user)
+    outgoing = FriendRequest.objects.filter(from_user=request.user)
+
+    return render(request, "tracker/friends_list.html", {
+        "friends": friends,
+        "incoming": incoming,
+        "outgoing": outgoing,
+    })

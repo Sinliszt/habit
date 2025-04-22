@@ -1,0 +1,24 @@
+{% extends "tracker/layout.html" %}
+
+{% block body %}
+
+    <h2>My Friends</h2>
+    <ul>
+        {% for friend in friends %}
+            <li>{{ friend.username }}</li>
+        {% endfor %}
+    </ul>
+
+
+    <h3>Incoming Requests</h3>
+
+    <ul>
+        {% for req in incoming %}
+            <li>{{ req.from_user.username }}
+                <form action="{% url 'accept_friend_request' req.id %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary"></button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
