@@ -6,10 +6,11 @@
 
     <div class="container">
         <h2>Search Users to Add as Friends</h2>
+        <a href="{% url 'friends_list' %}">My Friends</a>
 
         <form method="get">
-            <input type="text" name="q" placeholder="Search by username or email" value="{{ query|default:''}}">
-            <button type="submit">Search</button>
+            <input type="text" name="q" placeholder="Search by username or email" value="{{ query|default:''}}" class="form-control">
+            <button type="submit" class="btn btn-primary">Search</button>
         </form>
 
         <hr>
@@ -21,7 +22,7 @@
                         {{user.username}} ({{ user.email }})
                         <form action="{% url 'send_friend_request' user.id %}" method="post" style="display: inline;">
                             {% csrf_token %}
-                            <button type="submit">Add Friend</button>
+                            <button type="submit" class="btn btn-info">Send Friend Request</button>
                         </form>
                     </li>
                 {% endfor %}
@@ -30,5 +31,5 @@
             <p>No users found for "{{ query }}"</p>
         {% endif %}
     </div>
-    
+
 {% endblock %}

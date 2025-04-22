@@ -12,6 +12,7 @@ from django.http import JsonResponse
 
 from .models import User, Habit, HabitLog, FriendRequest
 from .forms import HabitForm, HabitLogForm
+from .utils import calculate_streaks
 
 User = get_user_model()
 
@@ -24,29 +25,15 @@ def index(request):
         logs=habit.logs.filter(user=request.user).order_by('-date')
         today_done = logs.filter(date=date.today()).exists()
 
-        current_streak = 0
-        longest_streak = 0
-        streak = 0
-        seen_dates = set(log.date for log in logs)
-        day = date.today()
-        while day in seen_dates:
-            streak += 1
-            day -= timedelta(days=1)
-        current_streak = streak
-
-        streak = 0
-        for i in range((date.today() - habit.created_at).days + 1):
-            day = habit.created_at + timedelta(days = i)
-            if day in seen_dates:
-                streak += 1
-                longest_streak = max(longest_streak, streak)
-            else:
-                streak = 0
+        streak_data = calculate_streaks(
+            log_dates = logs.values.list("date", flat=True),
+            start_date = habit.created_at,
+        )
 
         habit_data.append({
             "habit": habit,
-            "current_streak": current_streak,
-            "longest_streak": longest_streak,
+            "current_streak": streak_data["current_streak"],
+            "longest_streak": streak_data["longest_streak"],
             "today_done": today_done,
         })
 
@@ -58,9 +45,21 @@ def index(request):
 @login_required
 def habit_detail(request, habit_id):
     habit = get_object_or_404(Habit, id=habit_id, users=request.user)
-    logs = habit.logs.order_by('-date')
-    today_done = logs.filter(user=request.user, date=date.today()).exists()
-    streak_data = get_streaks_and_progress(request.user, habit)
+    user_id = request.GET.get("user")
+    selected_user = request.user
+
+    if user_id:
+        try:
+            selected_user = User.objects.get(id=user_id)
+            if selected_user not in habit.users.all():
+                selected_user = request.user
+        except User.DoesNotExist:
+            selected_user = request.user
+
+    logs = habit.logs.filter(user=selected_user).order_by('-date')
+    today_done = logs.filter(date=date.today()).exists()
+    streak_data = get_streaks_and_progress(selected_user, habit)
+
     if request.method == 'POST':
         form = HabitLogForm(request.POST)
         if form.is_valid():
@@ -88,6 +87,8 @@ def habit_detail(request, habit_id):
         "today_done": today_done,
         "form": form,
         "streak": streak_data,
+        "shared_users": habit.users.exclude(id=request.user.id),
+        "selected_user": selected_user,
     })
 
 def login_view(request):
@@ -186,56 +187,43 @@ def log_shared_habit(request):
         )
 
 def get_streaks_and_progress(user, habit):
-    logs = HabitLog.objects.filter(user=user, habit=habit).order_by("-date")
-    today = date.today()
-    current_streak = 0
-    longest_streak = 0
-    streak = 0
-    last_date = None
-    
-    all_dates = set(log.date for log in logs)
+    logs = HabitLog.objects.filter(user=user, habit=habit)
+    return calculate_streaks(
+        log_dates=logs.values_list("date", flat=True),
+        start_date=habit.created_at
+    )
 
-    for i in range((today - habit.created_at).days + 1):
-        t = today - timedelta(days=i)
-        if t in all_dates:
-            streak +=1
-            if i == 0:
-                current_streak = streak
-            else:
-                if i == 0:
-                    continue
-                longest_streak = max(longest_streak, streak)
-                streak = 0
-
-            
-            longest_streak = max(longest_streak, streak)
-            total_days = (today-habit.created_at).days + 1
-            completion_percent = round((len(all_dates) / total_days)*100,1)
-
-            return {
-                "current_streak": current_streak,
-                "longest_streak": longest_streak,
-                "completion_percent": completion_percent,
-            }
-
+@login_required
+def friends_list(request):
+    user = request.user
+    friends = user.friends.all()
+    incoming_requests = FriendRequest.objects.filter(to_user=user)
+    return render(request, "tracker/friends_list.html", {
+        "friends": friends,
+        "incoming_requests": incoming_requests,
+    })
 
 @login_required
 def send_friend_request(request, user_id):
     to_user = get_object_or_404(User, id=user_id)
-    FriendRequest.objects.get_or_create(from_user=request.user, to_user=to_user)
+    if FriendRequest.objects.filter(from_user=request.user, to_user=to_user).exists():
+        pass
+    else:
+        FriendRequest.objects.create(from_user=request.user, to_user=to_user)
+    
     return redirect("search_users")
 
 @login_required
 def accept_friend_request(request, request_id):
-    friends = request.user.friends.all()
-    incoming = FriendRequest.objects.filter(to_user=request.user)
-    outgoing = FriendRequest.objects.filter(from_user=request.user)
+    friend_request = get_object_or_404(FriendRequest, id=request_id, to_user=request.user)
+    from_user = friend_request.from_user
 
-    return render(request, "tracker/friends_list.html", {
-        "friends": friends,
-        "incoming": incoming,
-        "outgoing": outgoing,
-    })
+    request.user.friends.add(from_user)
+    from_user.friends.add(request.user)
+
+    friend_request.delete()
+
+    return redirect('friends_list')
 
 @login_required
 def search_users(request):
@@ -249,11 +237,4 @@ def search_users(request):
     return render(request, "tracker/friend_search.html", {
         "users": users,
         "query": query,
-    })
-
-@login_required
-def friends_list(request):
-    friends = request.user.friends.all()
-    return render(request, "tracker/friends_list.html", {
-        "friends": friends,
     })

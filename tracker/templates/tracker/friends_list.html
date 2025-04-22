@@ -3,6 +3,10 @@
 {% block body %}
 
     <h2>My Friends</h2>
+    <a href="{% url 'search_users' %}">
+        <button class="btn btn-primary">Add Friends</button>
+    </a>
+
     <ul>
         {% for friend in friends %}
             <li>{{ friend.username }}</li>
@@ -13,7 +17,7 @@
     <h3>Incoming Requests</h3>
 
     <ul>
-        {% for req in incoming %}
+        {% for req in incoming_requests %}
             <li>{{ req.from_user.username }}
                 <form action="{% url 'accept_friend_request' req.id %}" method="post">
                     {% csrf_token %}
@@ -22,3 +26,5 @@
             </li>
         {% endfor %}
     </ul>
+
+{% endblock %}
