@@ -168,7 +168,7 @@ def habit_detail(request, habit_id):
         "form": form,
         "today_completion": today_completion,
         "streak": streak_data,
-        "shared_users": habit.users.exclude(id=request.user.id),
+        "shared_users": habit.users.exclude(id=habit.owner.id) if habit.owner else habit.users.all(),
         "selected_user": selected_user,
         "everyone_progress": everyone_progress,
     })
@@ -230,6 +230,7 @@ def create_habit(request):
         form = HabitForm(request.POST, user=request.user)
         if form.is_valid():
             habit=form.save(commit=False)
+            habit.owner = request.user
             habit.save()
             form.save_m2m()
             habit.users.add(request.user)
@@ -362,7 +363,8 @@ def profile_view(request, username):
 
 @login_required
 def shared_habits_view(request):
-    shared_habits = Habit.objects.filter(users=request.user).exclude(owner=request.user)
+    shared_habits = Habit.objects.filter(users=request.user)
+    shared_habits = [habit for habit in shared_habits if habit.users.count() > 1]
     return render(request, "tracker/shared_habits.html", {
         "habits": shared_habits,
     })

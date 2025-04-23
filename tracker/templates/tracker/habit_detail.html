@@ -5,6 +5,16 @@
     <div class="container mt-4">
         <h2 class="mb-3">{{ habit.name }}</h2>
 
+        {% with shared_users=habit.users.exclude(id=habit.owner.id) %}
+            {% if shared_users %}
+                <small>
+                    <strong>Shared with: </strong>
+                    {% for user in shared_users %}
+                        {{ user.username }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </small>
+            {% endif %}
+        {% endwith %}
         <p>
             <strong>Today's status: </strong>
             {% if today_done %}

@@ -11,8 +11,10 @@
             <div class="border rounded p-3 mb-3 bg-light">
                 <h5 class="mb-2">
                     <a href="{% url 'habit_detail' item.habit.id %}">{{ item.habit.name }}</a>
-                    {% if item.habit.owner != request.user %}
+                    {% if item.habit.owner.id != request.user.id %}
                         <span class="badge bg-info">Shared</span>
+                    {% else %}
+                        <span class="badge bg-warning">Owner</span>
                     {% endif %}
                 </h5>
                 <p class="mb-1">
