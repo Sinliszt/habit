@@ -26,8 +26,9 @@ def index(request):
         today_done = logs.filter(date=date.today()).exists()
 
         streak_data = calculate_streaks(
-            log_dates = logs.values_list("date", flat=True),
+            logs = logs,
             start_date = habit.created_at,
+            target_minutes = habit.target_minutes if hasattr(habit, "target_minutes") else 30
         )
 
         habit_data.append({
@@ -78,11 +79,15 @@ def habit_detail(request, habit_id):
     else:
         if selected_user == request.user:
             try:
-                note = HabitLog.objects.get(user=request.user, habit=habit, date=date.today()).note
+                log_today = HabitLog.objects.get(user=request.user, habit=habit, date=date.today())
+                minutes_done = log_today.minutes_done
+                note = log_today.note
             except HabitLog.DoesNotExist:
                 note = ""
+                minutes_done = None
             form = HabitLogForm(initial={
             "note": note,
+            "minutes_done": minutes_done,
             })
         else:
             form = None

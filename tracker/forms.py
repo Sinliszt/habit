@@ -4,7 +4,20 @@ from .models import Habit, User, HabitLog
 class HabitLogForm(forms.Form):
     class Meta:
         model = HabitLog
-        fields = ["minutes_done", "note"]    
+        fields = ["minutes_done", "note"]  
+
+        widgets = {
+            "note": forms.Textarea(attrs ={
+                "class": "form-control",
+                "rows": 3,
+                "placeholder": "Write a quick note (optional)",
+            }),
+            "minutes_done": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": 0,
+                "max": 180,
+            })
+        }  
 class HabitForm(forms.ModelForm):
     users = forms.ModelMultipleChoiceField(
         queryset=User.objects.none(),

@@ -29,7 +29,7 @@ class HabitLog(models.Model):
     date = models.DateField(auto_now_add=True)
     completed = models.BooleanField(default=False)
     minutes_done = models.PositiveIntegerField(default=0)
-    note = models.TextField(blank=True, null=True)
+    note = models.TextField(blank=True)
 
     class Meta:
         unique_together = ("habit", "user", "date")
