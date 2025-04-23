@@ -46,6 +46,23 @@ def index(request):
         "habit_data": habit_data,
     })
 
+@require_POST
+@login_required
+def mark_habit_done(request, habit_id):
+    habit = get_object_or_404(Habit, id=habit_id, users=request.user)
+    HabitLog.objects.create(
+        habit=habit,
+        user=request.user,
+        date=date.today(),
+        minutes_done=habit.target_minutes,
+        note="Marked done via button"
+    )
+    
+    return JsonResponse({"status": "success", "message": "Habit marked as done!"})
+    print(f"Returning response for habit {habit_id}...")
+    return JsonResponse({'status': 'success'})
+
+
 
 @login_required
 def habit_detail(request, habit_id):
