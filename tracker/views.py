@@ -5,10 +5,12 @@ from django.contrib.auth.decorators import login_required
 from datetime import date, timedelta
 from django.http import HttpResponseRedirect
 from django.db import IntegrityError
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.utils.timezone import now
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
+from itertools import groupby
+from operator import attrgetter
 
 from .models import User, Habit, HabitLog, FriendRequest
 from .forms import HabitForm, HabitLogForm
@@ -23,7 +25,8 @@ def index(request):
 
     for habit in habits:
         logs=habit.logs.filter(user=request.user).order_by('-date')
-        today_done = logs.filter(date=date.today()).exists()
+        today_minutes = logs.filter(date=date.today()).aggregate(Sum("minutes_done"))["minutes_don__sum"] or 0
+        today_done = today_minutes >= target_minutes
 
         streak_data = calculate_streaks(
             logs = logs,
@@ -55,29 +58,35 @@ def habit_detail(request, habit_id):
     selected_user = get_object_or_404(User, id=selected_user_id)
 
     logs = HabitLog.objects.filter(habit=habit, user=selected_user).order_by('-date')
-    today_done = logs.filter(date=date.today()).exists()
+    today_minutes = logs.filter(date=date.today()).aggregate(Sum('minutes_done'))['minutes_done__sum'] or 0
+    today_done = today_minutes >= habit.target_minutes    
+        
     streak_data = get_streaks_and_progress(selected_user, habit) or {
         "current_streak": 0,
         "longest_streak": 0,
         "completion_percent": 0,
     }
 
-    if request.method == 'POST' and selected_user == request.user:
-        form = HabitLogForm(request.POST)
-        if form.is_valid():
-            note = form.cleaned_data['note']
-            minutes_done = form.cleaned_data["minutes_done"]
-            HabitLog.objects.update_or_create(
-                habit=habit,
-                user=request.user,
-                date=date.today(), 
-                defaults={
-                    'note': note,
-                    "minutes_done": minutes_done,
-                })
-            return redirect('habit_detail', habit_id=habit.id)
-    else:
+    if request.method == 'POST':
         if selected_user == request.user:
+            form = HabitLogForm(request.POST)
+            if form.is_valid():
+                note = form.cleaned_data['note']
+                minutes_done = form.cleaned_data["minutes_done"]
+                HabitLog.objects.update_or_create(
+                    habit=habit,
+                    user=request.user,
+                    date=date.today(), 
+                    defaults={
+                        "note": note,
+                        "minutes_done": minutes_done,
+                    }
+                )
+                return redirect('habit_detail', habit_id=habit.id)
+            else:
+                form = None
+    else:
+        if request.user == selected_user:
             try:
                 log_today = HabitLog.objects.get(user=request.user, habit=habit, date=date.today())
                 minutes_done = log_today.minutes_done
@@ -92,6 +101,17 @@ def habit_detail(request, habit_id):
         else:
             form = None
 
+    logs_by_date = []
+    for date_value, group in groupby(logs, key=attrgetter("date")):
+        logs_by_date.append({
+            "date": date_value,
+            "logs": list(group),
+        })
+
+    for entry in logs_by_date:
+        total = sum(log.minutes_done for log in entry['logs'])
+        entry['total_minutes'] = total
+
     all_users = [habit.owner] + list(habit.users.all())
     everyone_progress = []
 
@@ -102,7 +122,9 @@ def habit_detail(request, habit_id):
             "longest_streak": 0,
             "completion_percent": 0,
         }
-        today_done = logs_for_user.filter(date=date.today()).exists()
+
+        today_minutes = logs.filter(date=date.today()).aggregate(Sum("minutes_done"))["minutes_done__sum"] or 0
+        today_done = today_minutes >= habit.target_minutes
 
         everyone_progress.append({
             "user": user,
@@ -114,7 +136,8 @@ def habit_detail(request, habit_id):
 
     return render(request, 'tracker/habit_detail.html', {
         "habit": habit,
-        "logs": logs,
+        "logs_by_date": logs,
+        "today_minutes": today_minutes,
         "today_done": today_done,
         "form": form,
         "streak": streak_data,
@@ -224,6 +247,8 @@ def get_streaks_and_progress(user, habit):
     target_minutes = habit.target_minutes 
 
     streak_data = calculate_streaks(logs, start_date, target_minutes)
+    return streak_data
+
 @login_required
 def friends_list(request):
     user = request.user

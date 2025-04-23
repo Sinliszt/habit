@@ -16,14 +16,18 @@ def calculate_streaks(logs, start_date, target_minutes):
     current_streak = 0
     longest_streak = 0
     streak = 0
+    on_streak = True
 
     for i in range((today - start_date).days + 1):
         day = today - timedelta(days=i)
         if day in qualifying_dates:
             streak +=1
             if i == 0:
-                current_streak = streak
+                current_streak = 1
+            elif on_streak:
+                current_streak += 1
         else:
+            on_streak = False
             longest_streak = max(longest_streak, streak)
             streak = 0
     

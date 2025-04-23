@@ -21,6 +21,13 @@
                     {% endfor %}
                 </select>
             </div>
+
+            <div class="mb-4">
+                <label for="{{ form.target_minutes.id_for_label }}" class="form-label">
+                    {{ form.target_minutes.label }} (minutes)
+                </label>
+                {{ form.target_minutes }}
+            </div>
             <div class="mb-4">
                 <label for="{{ form.users.id_for_label }}" class="form-label"><strong>Share with friends:</strong></label>
                 <select name="users" id="{{ form.users.id_for_label }}" class="form-control" multiple>

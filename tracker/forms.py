@@ -1,7 +1,7 @@
 from django import forms
 from .models import Habit, User, HabitLog
 
-class HabitLogForm(forms.Form):
+class HabitLogForm(forms.ModelForm):
     class Meta:
         model = HabitLog
         fields = ["minutes_done", "note"]  
@@ -25,7 +25,16 @@ class HabitForm(forms.ModelForm):
     )
     class Meta:
         model = Habit
-        fields = ['name', 'category', 'users']
+        fields = ['name', 'category', 'users', 'target_minutes']
+
+        widgets = {
+            "target_minutes": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": 1,
+                "max": 180,
+                "placeholder": "Enter your daily target(in mins)"
+            }),
+        }
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user")

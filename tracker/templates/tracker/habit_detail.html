@@ -15,25 +15,29 @@
         </p>
 
         <p>
-            <strong>Cateogry: </strong>
+            <strong>Category: </strong>
             <span class="text-muted">{{ habit.category }}</span>
         </p>
 
         <hr>
-        
-        <form method="post" class="mb-4" id="note_today_input">
-            {% csrf_token %}
-            <div class="mb-3">
-                <label for="{{ form.minutes_done.id_for_label }}">Minutes Done</label>
-                {{ form.minutes_done}}
-            </div>
 
-            <div class="mb-3">
-                <label for="{{ form.note.id_for_label}}">Note: </label>
-                {{ form.note }}
-            </div>    
-            <button type="submit" class="btn btn-primary">Save progress</button>
-        </form>
+        {% if form %}
+        
+            <form method="post" class="mb-4">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="{{ form.minutes_done.id_for_label }}">Minutes Done</label>
+                    {{ form.minutes_done }}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.note.id_for_label}}">Note: </label>
+                    {{ form.note }}
+                </div>    
+                <button type="submit" class="btn btn-primary">Save progress</button>
+            </form>
+        
+        {% endif %}
         <div class="mb-4">
             <div class="alert alert-info">
                 <strong>Current Streak: </strong>{{ streak.current_streak }} days
@@ -48,6 +52,9 @@
                     style="width: {{ streak.completion_percent }}%;"
                     aria-valuenow="{{ streak.completion_percent}}" aria-valuemin="0" aria-valuemax="100">
                     </div>
+                </div>
+                <div class="text-center justify-content-between">
+                    {{ today_minutes }} / {{ habit.target_minutes }}
                 </div>
             </div>
         </div>
@@ -91,7 +98,7 @@
             </table>
         </div>
 
-        <h3 class="mb-2">History</h3>
+        <h3 class="mb-2 mt-5">Running Log History</h3>
 
         <form method="get" class="mb-3">
             <label for="user">View logs from:</label>
@@ -108,13 +115,21 @@
         </form>
 
         <ul class="list-group">
-            {% for log in logs %}
-                <li class="list-group-item d-flex justify-content-between">
-                    <span>
-                        <strong>{{ log.date }}</strong>: {{ log.note }}
-                    </span>
-                    <span class="text-muted">{{ log.user.username }}</span>
+            {% for entry in logs_by_date %}
+                <li class="list-group-item active">
+                    <strong>{{ entry.date }}</strong>
+                    {% if entry.total_minutes %}
+                        <span><em>Total: {{ entry.total_minutes }} min</em></span>
+                    {% endif %}
                 </li>
+                {% for log in entry.logs %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <div>
+                            <strong>{{ log.minutes_done }} min</strong>{% if log.note %} - {{ log.note }} {% endif %} 
+                        </div>
+                        <small class="text-muted">{{ log.user.username }}</small>
+                    </li>
+                {% endfor %}
             {% empty %}
                 <li class="list-group-item text-muted">No entries yet.</li>
             {% endfor %}
