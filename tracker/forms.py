@@ -1,9 +1,10 @@
 from django import forms
-from .models import Habit, User
+from .models import Habit, User, HabitLog
 
 class HabitLogForm(forms.Form):
-    note = forms.CharField(label="Note for today (optional)", required=False)
-    
+    class Meta:
+        model = HabitLog
+        fields = ["minutes_done", "note"]    
 class HabitForm(forms.ModelForm):
     users = forms.ModelMultipleChoiceField(
         queryset=User.objects.none(),

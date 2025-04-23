@@ -16,6 +16,8 @@ class Habit(models.Model):
     created_at = models.DateField(auto_now_add=True)
     description = models.TextField(blank=True)
     users = models.ManyToManyField(User, related_name="shared_habits")
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="habits_owned", null=True, blank=True)
+    target_minutes = models.PositiveIntegerField(default=30)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='habits')
 
     def __str__(self):
@@ -26,6 +28,7 @@ class HabitLog(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateField(auto_now_add=True)
     completed = models.BooleanField(default=False)
+    minutes_done = models.PositiveIntegerField(default=0)
     note = models.TextField(blank=True, null=True)
 
     class Meta:

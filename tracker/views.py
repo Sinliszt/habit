@@ -45,40 +45,66 @@ def index(request):
 @login_required
 def habit_detail(request, habit_id):
     habit = get_object_or_404(Habit, id=habit_id, users=request.user)
-    user_id = request.GET.get("user")
-    selected_user = request.user
 
-    if user_id:
-        try:
-            selected_user = User.objects.get(id=user_id)
-            if selected_user not in habit.users.all():
-                selected_user = request.user
-        except User.DoesNotExist:
-            selected_user = request.user
+    if request.user != habit.owner and request.user not in habit.users.all():
+        return HttpResponseForbidden("You do not have access to this habit")
 
-    logs = habit.logs.filter(user=selected_user).order_by('-date')
+
+    selected_user_id = request.GET.get("user", request.user.id)
+    selected_user = get_object_or_404(User, id=selected_user_id)
+
+    logs = HabitLog.objects.filter(habit=habit, user=selected_user).order_by('-date')
     today_done = logs.filter(date=date.today()).exists()
-    streak_data = get_streaks_and_progress(selected_user, habit)
+    streak_data = get_streaks_and_progress(selected_user, habit) or {
+        "current_streak": 0,
+        "longest_streak": 0,
+        "completion_percent": 0,
+    }
 
-    if request.method == 'POST':
+    if request.method == 'POST' and selected_user == request.user:
         form = HabitLogForm(request.POST)
         if form.is_valid():
             note = form.cleaned_data['note']
+            minutes_done = form.cleaned_data["minutes_done"]
             HabitLog.objects.update_or_create(
                 habit=habit,
                 user=request.user,
                 date=date.today(), 
                 defaults={
-                    'note': note
+                    'note': note,
+                    "minutes_done": minutes_done,
                 })
             return redirect('habit_detail', habit_id=habit.id)
     else:
-        try:
-            note = habit.logs.get(user=request.user, date=date.today()).note
-        except HabitLog.DoesNotExist:
-            note = ""
-        form = HabitLogForm(initial={
-        "note": note,
+        if selected_user == request.user:
+            try:
+                note = HabitLog.objects.get(user=request.user, habit=habit, date=date.today()).note
+            except HabitLog.DoesNotExist:
+                note = ""
+            form = HabitLogForm(initial={
+            "note": note,
+            })
+        else:
+            form = None
+
+    all_users = [habit.owner] + list(habit.users.all())
+    everyone_progress = []
+
+    for user in all_users:
+        logs_for_user = HabitLog.objects.filter(habit=habit, user=user)
+        streak = get_streaks_and_progress(user, habit) or {
+            "current_streak": 0,
+            "longest_streak": 0,
+            "completion_percent": 0,
+        }
+        today_done = logs_for_user.filter(date=date.today()).exists()
+
+        everyone_progress.append({
+            "user": user,
+            "current_streak": streak["current_streak"],
+            "longest_streak": streak["longest_streak"],
+            "completion_percent": streak["completion_percent"],
+            "today_done": today_done,
         })
 
     return render(request, 'tracker/habit_detail.html', {
@@ -89,6 +115,7 @@ def habit_detail(request, habit_id):
         "streak": streak_data,
         "shared_users": habit.users.exclude(id=request.user.id),
         "selected_user": selected_user,
+        "everyone_progress": everyone_progress,
     })
 
 def login_view(request):
@@ -188,11 +215,10 @@ def log_shared_habit(request):
 
 def get_streaks_and_progress(user, habit):
     logs = HabitLog.objects.filter(user=user, habit=habit)
-    return calculate_streaks(
-        log_dates=logs.values_list("date", flat=True),
-        start_date=habit.created_at
-    )
+    start_date = habit.created_at
+    target_minutes = habit.target_minutes 
 
+    streak_data = calculate_streaks(logs, start_date, target_minutes)
 @login_required
 def friends_list(request):
     user = request.user

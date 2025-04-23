@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             if(data.status == "success") {
                 document.getElementById("status-msg").innerText = `Logged by ${data.user} on ${data.today}`;
+                document.getElementById("note_today_input").innerText = ""
             } else {
                 document.getElementById("status-msg").innerText = data.message;
             }

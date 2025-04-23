@@ -14,7 +14,14 @@
             {% endif %}
         </p>
 
-        <form method="post" class="mb-4">
+        <p>
+            <strong>Cateogry: </strong>
+            <span class="text-muted">{{ habit.category }}</span>
+        </p>
+
+        <hr>
+
+        <form method="post" class="mb-4" id="note_today_input">
             {% csrf_token%}
             {{ form.as_p }}
             <button type="submit" class="btn btn-primary">Save today's entry</button>
@@ -36,6 +43,45 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <hr>
+
+        <h3 class="mt-5">Everyone's Progress</h3>
+        <div class="table-responsive">
+            <table class="table table-striped mt-3">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Today</th>
+                        <th>Current Streak</th>
+                        <th>Longest Streak</th>
+                        <th>Completion %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for progress in everyone_progress %}
+                        <tr>
+                            <td>{{ progress.user.username }}</td>
+                            <td>
+                                {% if progress.today_done %}
+                                    <span class="text-success">✅</span>
+                                {% else %}
+                                    <span class="text-danger">❌</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ progress.current_streak }}</td>
+                            <td>{{ progress.longest_streak }}</td>
+                            <td>
+                                {{ progress.completion_percent }}%
+                                <div class="progress mt-1">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress.completion_percent }}%";" aria-valuenow="{{ progress.completion_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
 
         <h3 class="mb-2">History</h3>

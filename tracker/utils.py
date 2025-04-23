@@ -1,8 +1,17 @@
 from datetime import date, timedelta
+from collections import defaultdict
 
-def calculate_streaks(log_dates, start_date):
+def calculate_streaks(logs, start_date, target_minutes):
     today = date.today()
-    log_dates = set(log_dates)
+
+    minutes_per_day = defaultdict(int)
+
+    for log in logs:
+        minutes_per_day[log.date] += log.minutes_done
+    qualifying_dates = {
+        day for day, 
+        minutes in minutes_per_day.items() if minutes >= target_minutes
+    }
 
     current_streak = 0
     longest_streak = 0
@@ -10,7 +19,7 @@ def calculate_streaks(log_dates, start_date):
 
     for i in range((today - start_date).days + 1):
         day = today - timedelta(days=i)
-        if day in log_dates:
+        if day in qualifying_dates:
             streak +=1
             if i == 0:
                 current_streak = streak
@@ -19,8 +28,13 @@ def calculate_streaks(log_dates, start_date):
             streak = 0
     
     longest_streak = max(longest_streak, streak)
-    total_days = (today-start_date).days + 1
-    completion_percent = round((len(log_dates) / total_days) * 100, 1) if total_days > 0 else 0.0
+    total_minutes_logged = sum(minutes_per_day.values())
+    expected_minutes = ((today - start_date).days + 1) * target_minutes
+
+    if expected_minutes > 0:
+        completion_percent = round((total_minutes_logged / expected_minutes) * 100, 1)
+    else:
+        completion_percent = 0.0
 
     return {
         "current_streak": current_streak,
