@@ -46,11 +46,11 @@
                 <strong>Longest Streak: </strong>{{ streak.longest_streak }} days!
             </div>
             <div class="alert alert-warning">
-                <strong>Completion: </strong><span id="completion">{{ streak.completion_percent }}</span>%
+                <strong>Completion: </strong><span id="completion">{{ today_completion }}</span>%
                 <div class="progress mt-1">
                     <div class="progress-bar bg-success" role="progressbar"
-                    style="width: {{ streak.completion_percent }}%;"
-                    aria-valuenow="{{ streak.completion_percent}}" aria-valuemin="0" aria-valuemax="100">
+                    style="width: {{ today_completion }}%;"
+                    aria-valuenow="{{ today_completion }}" aria-valuemin="0" aria-valuemax="100">
                     </div>
                 </div>
                 <div class="text-center justify-content-between">
@@ -75,24 +75,26 @@
                 </thead>
                 <tbody>
                     {% for progress in everyone_progress %}
-                        <tr>
-                            <td>{{ progress.user.username }}</td>
-                            <td>
-                                {% if progress.today_done %}
-                                    <span class="text-success">✅</span>
-                                {% else %}
-                                    <span class="text-danger">❌</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ progress.current_streak }}</td>
-                            <td>{{ progress.longest_streak }}</td>
-                            <td>
-                                {{ progress.completion_percent }}%
-                                <div class="progress mt-1">
-                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress.completion_percent }}%";" aria-valuenow="{{ progress.completion_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </td>
-                        </tr>
+                        {% if progress.user and progress.user.username %}
+                            <tr>
+                                <td>{{ progress.user.username }}</td>
+                                <td>
+                                    {% if progress.today_done %}
+                                        <span class="text-success">✅</span>
+                                    {% else %}
+                                        <span class="text-danger">❌</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ progress.current_streak }}</td>
+                                <td>{{ progress.longest_streak }}</td>
+                                <td>
+                                    {{ progress.completion_percent }}%
+                                    <div class="progress mt-1">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress.completion_percent|floatformat:1 }}%;" aria-valuenow="{{ progress.completion_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endif %}
                     {% endfor %}
                 </tbody>
             </table>

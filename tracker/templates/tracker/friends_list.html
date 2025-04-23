@@ -19,7 +19,9 @@
                         {% for friend in friends%}
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 {{ friend.username }}
-                                <button class="btn btn-outline-secondary btn-sm">View Profile</button>
+                                <a href="{% url 'profile_view' friend.username %}">
+                                    <button class="btn btn-outline-secondary btn-sm">View Profile</button>
+                                </a>
                             </li>
                         {% endfor %}
                     </ul>

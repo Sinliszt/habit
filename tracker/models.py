@@ -32,7 +32,7 @@ class HabitLog(models.Model):
     note = models.TextField(blank=True)
 
     class Meta:
-        unique_together = ("habit", "user", "date")
+        ordering = ["-date"]
     
     def __str__(self):
         return f"{self.user.username} - {self.habit.name} on {self.date}"
@@ -41,6 +41,7 @@ class FriendRequest(models.Model):
     from_user = models.ForeignKey(User, related_name="friend_requests_sent", on_delete=models.CASCADE)
     to_user = models.ForeignKey(User, related_name="friend_requests_received", on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
+    is_accepted = models.BooleanField(default=False)
 
     def accept(self):
         self.to_user.friends.add(self.from_user)

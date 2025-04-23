@@ -1,0 +1,61 @@
+{% extends "tracker/layout.html" %}
+
+{% load static %}
+
+{% block body %}
+
+    <div class="container mt-4">
+        <div class="card shadow-sm p-4">
+            <h2 class="mb-3">{{ profile_user.username }}'s Profile</h2>
+
+            {% if can_send_request%}
+                <form method="POST" class="mb-3">
+                    {% csrf_token %}
+                    <button type="submit" name="send_friend_request" class="btn btn-primary">Send Friend Request</button>
+        
+                </form>
+            {% elif already_requsted %}
+                <div class="alert alert-info">Friend request sent</div>
+            {% elif already_friends %}
+                <div class="alert alert-success">You are already friends</div>
+            {% endif %}
+
+            <hr class="my-4">
+
+            <h3 class="mb-3">Habits</h3>
+
+            {% if habits %}
+                <div class="list-group">
+                    <ul>
+                        {% for item in habits %}
+                            <div class="list-group-item">
+                                <h5 class="mb-1">{{ item.habit.name }}</h5>
+                                <p class="mb-1 text-muted">
+                                    {% if item.owner == profile_user %}
+                                        Owner
+                                    {% else %}
+                                        Shared
+                                    {% endif %}
+                                </p>
+                                <small>
+                                    <strong>Shared with:</strong>
+                                    {% if item.shared_with %}
+                                        {% for user in item.shared_with %}
+                                            {{ user.username }}{% if not forloop.last %}, {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        No one
+                                    {% endif %}
+                                </small>
+                            </div>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% else %}
+                <div class="alert alert-secondary">This user has no habits yet</div>
+            {% endif %}             
+
+        </div>
+    </div>
+
+{% endblock %}

@@ -25,8 +25,9 @@ def index(request):
 
     for habit in habits:
         logs=habit.logs.filter(user=request.user).order_by('-date')
-        today_minutes = logs.filter(date=date.today()).aggregate(Sum("minutes_done"))["minutes_don__sum"] or 0
-        today_done = today_minutes >= target_minutes
+        today_minutes = logs.filter(date=date.today()).aggregate(Sum("minutes_done"))["minutes_done__sum"] or 0
+    
+        today_done = today_minutes >= habit.target_minutes
 
         streak_data = calculate_streaks(
             logs = logs,
@@ -53,14 +54,16 @@ def habit_detail(request, habit_id):
     if request.user != habit.owner and request.user not in habit.users.all():
         return HttpResponseForbidden("You do not have access to this habit")
 
-
     selected_user_id = request.GET.get("user", request.user.id)
     selected_user = get_object_or_404(User, id=selected_user_id)
 
     logs = HabitLog.objects.filter(habit=habit, user=selected_user).order_by('-date')
-    today_minutes = logs.filter(date=date.today()).aggregate(Sum('minutes_done'))['minutes_done__sum'] or 0
-    today_done = today_minutes >= habit.target_minutes    
-        
+
+    today_minutes = logs.filter(date=date.today()).aggregate(Sum("minutes_done"))["minutes_done__sum"] or 0
+    today_done = today_minutes >= habit.target_minutes
+
+    today_completion = round((today_minutes / habit.target_minutes) * 100, 1) if habit.target_minutes else 0
+
     streak_data = get_streaks_and_progress(selected_user, habit) or {
         "current_streak": 0,
         "longest_streak": 0,
@@ -73,31 +76,31 @@ def habit_detail(request, habit_id):
             if form.is_valid():
                 note = form.cleaned_data['note']
                 minutes_done = form.cleaned_data["minutes_done"]
-                HabitLog.objects.update_or_create(
+
+                total_today = HabitLog.objects.filter(
                     habit=habit,
-                    user=request.user,
-                    date=date.today(), 
-                    defaults={
-                        "note": note,
-                        "minutes_done": minutes_done,
-                    }
-                )
+                    user=request.user, 
+                    date=date.today(),
+                ).aggregate(Sum("minutes_done"))["minutes_done__sum"] or 0
+
+                if minutes_done < 1:
+                    form.add_error("minutes_done", "Minutes must be positive")
+                elif minutes_done + total_today < total_today:
+                    form.add_error("minutes done", f"You have already logged {total_today} minutes today.")
+                else:
+                    HabitLog.objects.create(
+                        habit=habit,
+                        user=request.user,
+                        date=date.today(), 
+                        note=note,
+                        minutes_done=minutes_done,
+                    )
                 return redirect('habit_detail', habit_id=habit.id)
             else:
                 form = None
     else:
         if request.user == selected_user:
-            try:
-                log_today = HabitLog.objects.get(user=request.user, habit=habit, date=date.today())
-                minutes_done = log_today.minutes_done
-                note = log_today.note
-            except HabitLog.DoesNotExist:
-                note = ""
-                minutes_done = None
-            form = HabitLogForm(initial={
-            "note": note,
-            "minutes_done": minutes_done,
-            })
+            form = HabitLogForm()
         else:
             form = None
 
@@ -113,6 +116,7 @@ def habit_detail(request, habit_id):
         entry['total_minutes'] = total
 
     all_users = [habit.owner] + list(habit.users.all())
+    all_users = [user for user in all_users if user is not None]
     everyone_progress = []
 
     for user in all_users:
@@ -123,8 +127,13 @@ def habit_detail(request, habit_id):
             "completion_percent": 0,
         }
 
-        today_minutes = logs.filter(date=date.today()).aggregate(Sum("minutes_done"))["minutes_done__sum"] or 0
-        today_done = today_minutes >= habit.target_minutes
+        user_today_minutes = HabitLog.objects.filter(
+            habit=habit,
+            user=user,
+            date=date.today(),
+        ).aggregate(Sum('minutes_done'))['minutes_done__sum'] or 0
+
+        today_done = user_today_minutes >= habit.target_minutes    
 
         everyone_progress.append({
             "user": user,
@@ -132,14 +141,15 @@ def habit_detail(request, habit_id):
             "longest_streak": streak["longest_streak"],
             "completion_percent": streak["completion_percent"],
             "today_done": today_done,
-        })
+        })        
 
     return render(request, 'tracker/habit_detail.html', {
         "habit": habit,
-        "logs_by_date": logs,
+        "logs_by_date": logs_by_date,
         "today_minutes": today_minutes,
         "today_done": today_done,
         "form": form,
+        "today_completion": today_completion,
         "streak": streak_data,
         "shared_users": habit.users.exclude(id=request.user.id),
         "selected_user": selected_user,
@@ -293,4 +303,49 @@ def search_users(request):
     return render(request, "tracker/friend_search.html", {
         "users": users,
         "query": query,
+    })
+
+@login_required
+def profile_view(request, username):
+    profile_user = get_object_or_404(User, username=username)
+
+    habits = Habit.objects.filter(Q(owner=profile_user) | Q(users=profile_user)).distinct()
+
+    already_requested = FriendRequest.objects.filter(from_user=request.user, to_user=profile_user).exists()
+    already_friends = FriendRequest.objects.filter(
+        Q(from_user=request.user, to_user=profile_user) |
+        Q(from_user=profile_user, to_user=request.user),
+        is_accepted = True
+    ).exists()
+
+    can_send_request = (
+        profile_user != request.user and not already_requested and not already_friends
+    )
+
+    if request.method == 'POST' and "send_friend_request" in request.POST and can_send_request:
+        FriendRequest.objects.create(from_user=request.user, to_user=profile_user)
+        return redirect("profile_view", username=username)
+
+    habit_data = []
+    for habit in habits:
+        shared_with = habit.users.exclude(id=profile_user.id)
+        habit_data.append({
+            "habit": habit,
+            "is_owner": habit.owner == profile_user,
+            "shared_with": shared_with,
+        })
+
+    return render(request, "tracker/profile.html", {
+        "profile_user": profile_user,
+        "habits": habit_data,
+        "can_send_request": can_send_request,
+        "already_requested": already_requested,
+        "already_friends": already_friends,
+    })
+
+@login_required
+def shared_habits_view(request):
+    shared_habits = Habit.objects.filter(users=request.user).exclude(owner=request.user)
+    return render(request, "tracker/shared_habits.html", {
+        "habits": shared_habits,
     })
