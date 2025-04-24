@@ -44,11 +44,18 @@
                                     <strong>Shared with:</strong>
                                     {% if item.shared_with %}
                                         {% for user in item.shared_with %}
-                                            {{ user.username }}{% if not forloop.last %}, {% endif %}
+                                            {% if user != request.user %}
+                                                {{ user.username }}{% if not forloop.last %}, {% endif %}
+                                            {% endif %}
                                         {% endfor %}
                                     {% else %}
                                         No one
                                     {% endif %}
+                                    <p class="mb-1">
+                                        🔥 <strong>Current Streak:</strong> {{ item.current_streak }} days<br>
+                                        🏆 <strong>Longest Streak:</strong> {{ item.longest_streak }} days<br>
+                                    </p>
+        
                                 </small>
                             </div>
                         {% endfor %}

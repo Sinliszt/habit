@@ -247,29 +247,40 @@ def create_habit(request):
 @require_POST
 @login_required
 def log_shared_habit(request):
-    habit_id = request.POST.get("habit_id")
-    try:
-        habit = Habit.objects.get(id=habit_id, users=request.user)
-        log, created = HabitLog.objects.update_or_create(
+        
+
+    if request.method == "POST":
+        habit_id = request.POST.get("habit_id")
+        note = request.POST.get("note", "")
+
+        try:
+            habit = Habit.objects.get(pk=habit_id)
+        except Habit.DoesNotExist:
+            return JsonResponse({
+                "status": "error", 
+                "message": "Habit not found",
+            })
+
+        if request.user not in habit.users.all() and request.user != habit.owner:
+            return JsonResponse({
+                "status": "error",
+                "message": "Not authorized to log this habit",
+            })
+        
+        HabitLog.objects.update_or_create(
             habit=habit,
             user=request.user,
+            minutes_done=habit.target_minutes,
             date=date.today(),
-            defaults = {
-                "note": request.POST.get("note", "")
-            }
+            note=note
         )
+
         return JsonResponse({
             "status": "success",
             "message": "Habit Logged!",
             "today": date.today().isoformat(),
             "user": request.user.username,
         })
-    except Habit.DoesNotExist:
-        return JsonResponse({
-            "status": "error",
-            "message": "Habit not found",
-        }, status=404
-        )
 
 def get_streaks_and_progress(user, habit):
     logs = HabitLog.objects.filter(user=user, habit=habit)
@@ -345,21 +356,32 @@ def profile_view(request, username):
     if request.method == "POST" and can_send_request:
         FriendRequest.objects.create(from_user=request.user, to_user=profile_user)
         return redirect("profile_view", username=username)
+    
 
     habit_data = []
     for habit in habits:
+        logs = HabitLog.objects.filter(habit=habit)
+        streaks = calculate_streaks(
+            logs=logs,
+            start_date=habit.created_at,
+            target_minutes=habit.target_minutes,
+        )
+
         shared_with = habit.users.exclude(id=profile_user.id)
         habit_data.append({
             "habit": habit,
             "is_owner": habit.owner == profile_user,
             "shared_with": shared_with,
+            "current_streak": streaks["current_streak"],
+            "longest_streak": streaks["longest_streak"],
         })
 
     return render(request, "tracker/profile.html", {
         "profile_user": profile_user,
         "can_send_request": can_send_request,
         "already_requested": already_requested,
-        "already_friends": already_friends
+        "already_friends": already_friends,
+        "habits": habit_data,
     })
 
 @login_required
