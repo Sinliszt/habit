@@ -135,8 +135,7 @@ def habit_detail(request, habit_id):
         total = sum(log.minutes_done for log in entry['logs'])
         entry['total_minutes'] = total
 
-    all_users = [habit.owner] + list(habit.users.all())
-    all_users = [user for user in all_users if user is not None]
+    all_users = list({user.id: user for user in [habit.owner] + list(habit.users.all())}.values())
     everyone_progress = []
 
     for user in all_users:

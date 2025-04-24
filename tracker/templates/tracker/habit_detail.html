@@ -96,9 +96,9 @@
                                 <td>{{ progress.current_streak }}</td>
                                 <td>{{ progress.longest_streak }}</td>
                                 <td>
-                                    {{ progress.completion_percent }}%
+                                    {{ today_completion }}%
                                     <div class="progress mt-1">
-                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress.completion_percent|floatformat:1 }}%;" aria-valuenow="{{ progress.completion_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ today_completion }}%;" aria-valuenow="{{ today_completion }}" aria-valuemin="0" aria-valuemax="100"></div>
                                     </div>
                                 </td>
                             </tr>
