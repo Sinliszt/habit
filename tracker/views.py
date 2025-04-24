@@ -283,10 +283,12 @@ def get_streaks_and_progress(user, habit):
 def friends_list(request):
     user = request.user
     friends = user.friends.all()
-    incoming_requests = FriendRequest.objects.filter(to_user=user)
+    incoming_requests = FriendRequest.objects.filter(to_user=user, is_accepted=False)
+    outgoing_requests = FriendRequest.objects.filter(from_user=user, is_accepted=False)
     return render(request, "tracker/friends_list.html", {
         "friends": friends,
         "incoming_requests": incoming_requests,
+        "outgoing_requests": outgoing_requests,
     })
 
 @login_required
@@ -297,7 +299,7 @@ def send_friend_request(request, user_id):
     else:
         FriendRequest.objects.create(from_user=request.user, to_user=to_user)
     
-    return redirect("search_users")
+    return redirect("friends_list")
 
 @login_required
 def accept_friend_request(request, request_id):
@@ -331,18 +333,16 @@ def profile_view(request, username):
 
     habits = Habit.objects.filter(Q(owner=profile_user) | Q(users=profile_user)).distinct()
 
+    is_self = request.user == profile_user
+
     already_requested = FriendRequest.objects.filter(from_user=request.user, to_user=profile_user).exists()
-    already_friends = FriendRequest.objects.filter(
-        Q(from_user=request.user, to_user=profile_user) |
-        Q(from_user=profile_user, to_user=request.user),
-        is_accepted = True
-    ).exists()
+    already_friends = profile_user in request.user.friends.all()
+    incoming_request = FriendRequest.objects.filter(from_user=profile_user, to_user=request.user).exists()
 
-    can_send_request = (
-        profile_user != request.user and not already_requested and not already_friends
-    )
+    can_send_request = not (is_self or already_friends or already_requested or incoming_request)
 
-    if request.method == 'POST' and "send_friend_request" in request.POST and can_send_request:
+
+    if request.method == "POST" and can_send_request:
         FriendRequest.objects.create(from_user=request.user, to_user=profile_user)
         return redirect("profile_view", username=username)
 
@@ -357,10 +357,9 @@ def profile_view(request, username):
 
     return render(request, "tracker/profile.html", {
         "profile_user": profile_user,
-        "habits": habit_data,
         "can_send_request": can_send_request,
         "already_requested": already_requested,
-        "already_friends": already_friends,
+        "already_friends": already_friends
     })
 
 @login_required

@@ -25,9 +25,12 @@
                     <div class="col-md-4 mb-4">
                         <div class="card shadow-sm">
                             <div class="card-body">
-                                <h5 class="card-title">{{ user.username }}</h5>
+                                <a href="{% url 'profile_view' user.username %}">
+                                    <h5 class="card-title">{{ user.username }}</h5>
+                                </a>
+                                
                                 <p class="card-text">{{ user.email }}</p>
-                                <form action="{% url 'send_friend_request' user.id}" method="post">
+                                <form action="{% url 'send_friend_request' user.id %}" method="post">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-primary btn-sm">Send Friend Request</button>
                                 </form>
