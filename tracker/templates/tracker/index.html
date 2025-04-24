@@ -23,15 +23,17 @@
                 </p>
                 <div>
                     <strong>Today:</strong>
-                    {% if item.today_done %}
-                        ✅
-                    {% else %}
-                        ❌
-                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-                        <button class="btn btn-sm btn-outline-success ms-2 mark-done-btn" data-habit-id="{{ item.habit.id }}">
-                            Mark Done
-                        </button>
-                    {% endif %}
+                    <span class="today-status" data-habit-id="{{ item.habit.id }}">
+                        {% if item.today_done %}
+                            ✅
+                        {% else %}
+                            ❌
+                            <button class="btn btn-sm btn-outline-success ms-2 mark-done-btn" data-habit-id="{{ item.habit.id }}">
+                                Mark Done
+                            </button>
+                        {% endif %}
+                    </span>
+                                        
                 </div>
             </div>
         {% empty %}

@@ -58,8 +58,12 @@ def mark_habit_done(request, habit_id):
         note="Marked done via button"
     )
     
-    print(f"Returning response for habit {habit_id}...")
-    return JsonResponse({'status': 'success', "message": "habit marked as done"})
+    return JsonResponse({
+        'status': 'success',
+        'message': 'Habit marked as done',
+        'today_done': True,
+        'completion_percent': 100
+    })
 
 
 
