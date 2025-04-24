@@ -31,8 +31,11 @@
                             <div class="list-group-item">
                                 <h5 class="mb-1">{{ item.habit.name }}</h5>
                                 <p class="mb-1 text-muted">
-                                    {% if item.owner == profile_user %}
+                                    {% if item.is_owner %}
                                         Owner
+                                        {% if item.shared_with %}
+                                        &mdash; Shared
+                                        {% endif %}
                                     {% else %}
                                         Shared
                                     {% endif %}
