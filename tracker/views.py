@@ -58,9 +58,8 @@ def mark_habit_done(request, habit_id):
         note="Marked done via button"
     )
     
-    return JsonResponse({"status": "success", "message": "Habit marked as done!"})
     print(f"Returning response for habit {habit_id}...")
-    return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'success', "message": "habit marked as done"})
 
 
 
@@ -168,7 +167,7 @@ def habit_detail(request, habit_id):
         "form": form,
         "today_completion": today_completion,
         "streak": streak_data,
-        "shared_users": habit.users.exclude(id=habit.owner.id) if habit.owner else habit.users.all(),
+        "shared_users": habit.users.exclude(id=request.user.id),
         "selected_user": selected_user,
         "everyone_progress": everyone_progress,
     })

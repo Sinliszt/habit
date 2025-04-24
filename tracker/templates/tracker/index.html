@@ -27,7 +27,7 @@
                         ✅
                     {% else %}
                         ❌
-
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                         <button class="btn btn-sm btn-outline-success ms-2 mark-done-btn" data-habit-id="{{ item.habit.id }}">
                             Mark Done
                         </button>
