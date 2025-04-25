@@ -96,9 +96,9 @@
                                 <td>{{ progress.current_streak }}</td>
                                 <td>{{ progress.longest_streak }}</td>
                                 <td>
-                                    {{ today_completion }}%
+                                    {{ progress.completion_percent }}%
                                     <div class="progress mt-1">
-                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ today_completion }}%;" aria-valuenow="{{ today_completion }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress.completion_percent }}%;" aria-valuenow="{{ progress.completion_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
                                     </div>
                                 </td>
                             </tr>
@@ -144,6 +144,13 @@
                 <li class="list-group-item text-muted">No entries yet.</li>
             {% endfor %}
         </ul>
+
+        <hr>
+
+        <h4 class="mt-4">Progress Calendar</h4>
+        <div id="calendar-heatmap" class="calendar-heatmap mb-3"></div>
+
+        <script src="{% static 'tracker/calendar_heatmap.js' %}"></script>
 
     </div>
 {% endblock %}

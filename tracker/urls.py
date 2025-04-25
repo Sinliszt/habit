@@ -16,4 +16,5 @@ urlpatterns = [
     path("profile/<str:username>/", views.profile_view, name="profile_view"),
     path("shared/", views.shared_habits_view, name="shared_habits"),
     path("habit/<int:habit_id>/mark_done/", views.mark_habit_done, name="mark_habit_done"),
+    path("habit/<int:habit_id>/log-data/", views.habit_log_data, name="habit_log_data"),
 ]

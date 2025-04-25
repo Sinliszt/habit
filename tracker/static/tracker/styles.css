@@ -1,3 +1,18 @@
 .body {
     padding: 10px;
 }
+
+.calendar-heatmap {
+    display: grid;
+    grid-template-columns: repeat(53, 12px);
+    grid-auto-rows: 12px;
+    gap: 2px;
+    max-width: 100%;
+}
+
+.heatmap-cell {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    cursor: pointer;
+}

@@ -11,6 +11,7 @@ from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from itertools import groupby
 from operator import attrgetter
+from collections import defaultdict
 
 from .models import User, Habit, HabitLog, FriendRequest
 from .forms import HabitForm, HabitLogForm
@@ -391,3 +392,26 @@ def shared_habits_view(request):
     return render(request, "tracker/shared_habits.html", {
         "habits": shared_habits,
     })
+
+def habit_log_data(request, habit_id):
+    habit = get_object_or_404(Habit, id=habit_id, users=request.user)
+
+    if request.user != habit.owner and request.user not in habit.users.all():
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+    
+    logs = HabitLog.objects.filter(habit=habit, user=request.user)
+
+    minutes_per_day = defaultdict(int)
+    for log in logs:
+        minutes_per_day[log.date] += log.minutes_done
+
+    log_data = {}
+    for log_date, total_minutes in minutes_per_day.items():
+        percent = round(min((total_minutes / habit.target_minutes) * 100, 1), 1) if habit.target_minutes else 0
+        log_data[str(log_date)] = {
+            "minutesDone": total_minutes,
+            "targetMinutes": habit.target_minutes,
+            "completionPercent": percent,
+        }
+    
+    return JsonResponse(log_data)
