@@ -7,10 +7,10 @@ The app is fully mobile-responsive, using Bootstrap to be able to display across
 
 In terms of complexity, it is in how the habits are modeled, tracked and visualized:
 
-- **Time-based logging and analytics: **Unlike static data entries or one-off transactions, habits are reset and can be logged daily, with durations and notes. Each log contributes to the streak calculations, completion percentages and progress evaluations
-- **Shared Habits: **Habits can be shared with selected friends for collaborative tracking without giving up personal ownership or data integrity. Users only see habits they’ve been granted access to.
-- **Progress Visualisation: **the frontend integrates a custom-built calendar using JS and AJAX, to show daily completion percentages through colour intensity. This updates in real time as logs are entered.
-- **Marking Habits: **Users can mark habits as “done” from the dashboard without reloading the page. And the requests are used to asynchronously update data and refresh visual components like the progress bar and completion stats.
+- **Time-based logging and analytics:** Unlike static data entries or one-off transactions, habits are reset and can be logged daily, with durations and notes. Each log contributes to the streak calculations, completion percentages and progress evaluations
+- **Shared Habits:** Habits can be shared with selected friends for collaborative tracking without giving up personal ownership or data integrity. Users only see habits they’ve been granted access to.
+- **Progress Visualisation:** The frontend integrates a custom-built calendar using JS and AJAX, to show daily completion percentages through colour intensity. This updates in real time as logs are entered.
+- **Marking Habits:** Users can mark habits as “done” from the dashboard without reloading the page. And the requests are used to asynchronously update data and refresh visual components like the progress bar and completion stats.
 
 ## File Structure
 
